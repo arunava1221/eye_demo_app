@@ -207,7 +207,7 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                       SizedBox(height: 16),
                       _FounderTile(
                         name: "Dr. Palak Khargonkar",
-                        role: "Co-Founder",
+                        role: "Founder",
                         details: "BNYS, MSc. Yoga\nFNYS, SGT University",
                       ),
                       _FounderTile(

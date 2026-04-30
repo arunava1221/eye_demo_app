@@ -1,8 +1,54 @@
 import 'package:flutter/material.dart';
 import 'upload_eye_screen.dart';
 
-class IntroductionScreen extends StatelessWidget {
+class IntroductionScreen extends StatefulWidget {
   const IntroductionScreen({super.key});
+
+  @override
+  State<IntroductionScreen> createState() => _IntroductionScreenState();
+}
+
+class _IntroductionScreenState extends State<IntroductionScreen> {
+  final ScrollController _scrollController = ScrollController();
+  bool _hasReachedBottom = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_updateScrollProgress);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _updateScrollProgress());
+  }
+
+  @override
+  void dispose() {
+    _scrollController
+      ..removeListener(_updateScrollProgress)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _updateScrollProgress() {
+    if (!_scrollController.hasClients) return;
+
+    final position = _scrollController.position;
+    final reachedBottom = position.maxScrollExtent <= 0 ||
+        position.pixels >= position.maxScrollExtent - 24;
+
+    if (reachedBottom != _hasReachedBottom) {
+      setState(() {
+        _hasReachedBottom = reachedBottom;
+      });
+    }
+  }
+
+  void _continueToUpload() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const UploadEyeScreen(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +68,7 @@ class IntroductionScreen extends StatelessWidget {
         ),
         child: SafeArea(
           child: SingleChildScrollView(
+            controller: _scrollController,
             padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,15 +259,12 @@ class IntroductionScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const UploadEyeScreen(),
-                        ),
-                      );
-                    },
-                    child: const Text("Continue"),
+                    onPressed: _hasReachedBottom ? _continueToUpload : null,
+                    child: Text(
+                      _hasReachedBottom
+                          ? "Continue"
+                          : "Scroll to bottom to continue",
+                    ),
                   ),
                 ),
               ],

@@ -2,7 +2,7 @@ name: eye_demo_app
 description: "IRIGYAN - Iris Mapping Educational Analysis Application"
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.10.8

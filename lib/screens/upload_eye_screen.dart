@@ -13,7 +13,6 @@ class UploadEyeScreen extends StatefulWidget {
 }
 
 class _UploadEyeScreenState extends State<UploadEyeScreen> {
-
   Uint8List? leftEye;
   Uint8List? rightEye;
   bool isSaving = false;
@@ -193,9 +192,26 @@ class _UploadEyeScreenState extends State<UploadEyeScreen> {
     );
   }
 
+  Future<void> _showSaveStatus(String message) async {
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Cloud Save Notice"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Continue"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(title: const Text("Upload Eyes")),
 
@@ -212,43 +228,50 @@ class _UploadEyeScreenState extends State<UploadEyeScreen> {
 
             if (leftEye != null && rightEye != null)
               ElevatedButton(
-                onPressed: isSaving ? null : () async {
-                  setState(() {
-                    isSaving = true;
-                  });
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        setState(() {
+                          isSaving = true;
+                        });
 
-                  try {
-                    await BackendService.saveIrisSession(
-                      leftEye: leftEye!,
-                      rightEye: rightEye!,
-                    );
-                  } catch (error) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Could not save session: $error"),
-                        ),
-                      );
-                    }
-                  } finally {
-                    if (mounted) {
-                      setState(() {
-                        isSaving = false;
-                      });
-                    }
-                  }
+                        String? cloudSaveMessage;
 
-                  if (!context.mounted) return;
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ModeSelectionScreen(
-                        leftEye: leftEye!,
-                        rightEye: rightEye!,
-                      ),
-                    ),
-                  );
-                },
+                        try {
+                          await BackendService.saveIrisSession(
+                            leftEye: leftEye!,
+                            rightEye: rightEye!,
+                          );
+                          cloudSaveMessage =
+                              "Iris session saved to your cloud account successfully.";
+                        } on BackendServiceException catch (error) {
+                          cloudSaveMessage =
+                              "${error.message}\n\nYou can still continue with local iris analysis now.";
+                        } catch (_) {
+                          cloudSaveMessage =
+                              "The iris session could not be saved to the cloud right now.\n\nYou can still continue with local iris analysis now.";
+                        } finally {
+                          if (mounted) {
+                            setState(() {
+                              isSaving = false;
+                            });
+                          }
+                        }
+
+                        if (!context.mounted) return;
+                        await _showSaveStatus(cloudSaveMessage!);
+                        if (!context.mounted) return;
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ModeSelectionScreen(
+                              leftEye: leftEye!,
+                              rightEye: rightEye!,
+                            ),
+                          ),
+                        );
+                      },
                 child: Text(isSaving ? "Saving..." : "Analyze Iris"),
               )
 
